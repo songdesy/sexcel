@@ -31,45 +31,44 @@ public class ExcelExportUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(ExcelExportUtil.class);
 
-    public static void exportExcel(List list, String sheetName, OutputStream os) throws Exception {
-
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
+    public static void exportExcel(List list, Class clz, String sheetName, OutputStream os) throws Exception {
         Workbook wb = createWorkbook();
+
         CellStyle cellStyle = createCellStyle(wb);
         Font font = wb.createFont();
         Sheet sheet = createSheet(wb, sheetName);
-        int rowIndex = 1;
-        for (Object o : list) {
-            Row row = sheet.createRow(rowIndex);
-            int cellIndex = 0;
-            Class cls = o.getClass();
-            Field[] fields = cls.getDeclaredFields();
-            for (Field field : fields) {
-                field.setAccessible(true);
-                Annotation annotation = field.getAnnotation(ExcelField.class);
-                if (annotation != null) {
-                    Object value = fieldValue(field, o);
-                    if (value != null) {
-                        createCell(value, cellStyle, row, cellIndex, HorizontalAlignment.CENTER, VerticalAlignment.CENTER, font);
-                    }
-                    cellIndex++;
-                }
 
+        if (CollectionUtils.isNotEmpty(list)) {
+            int rowIndex = 1;
+            for (Object o : list) {
+                Row row = sheet.createRow(rowIndex);
+                int cellIndex = 0;
+//                Class cls = o.getClass();
+                Field[] fields = clz.getDeclaredFields();
+                for (Field field : fields) {
+                    field.setAccessible(true);
+                    Annotation annotation = field.getAnnotation(ExcelField.class);
+                    if (annotation != null) {
+                        Object value = fieldValue(field, o);
+                        if (value != null) {
+                            createCell(value, cellStyle, row, cellIndex, HorizontalAlignment.CENTER, VerticalAlignment.CENTER, font);
+                        }
+                        cellIndex++;
+                    }
+
+                }
+                rowIndex++;
             }
-            rowIndex++;
         }
-        createTitle(list.get(0), wb, sheet);
+
+        createTitle(clz, wb, sheet);
         wb.write(os);
-//        saveFile(wb);
 
     }
 
-    private static void createTitle(Object o, Workbook wb, Sheet sheet) {
+    private static void createTitle(Class cls, Workbook wb, Sheet sheet) {
         Row row = sheet.createRow(0);
         int cellIndex = 0;
-        Class cls = o.getClass();
         Field[] fields = cls.getDeclaredFields();
         Font font = wb.createFont();
         CellStyle cellStyle = createCellStyle(wb);
